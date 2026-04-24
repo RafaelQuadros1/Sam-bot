@@ -4,9 +4,11 @@
 import axios from "axios";
 import { PREFIX } from "../../config.js";
 import { InvalidParameterError, WarningError } from "../../errors/index.js";
+import { getTrendsMcpApiToken } from "../../utils/database.js";
 import { errorLog } from "../../utils/logger.js";
 
 const TRENDSTOOLS_BASE_URL = "https://trendstools.net/json/twitter";
+const TRENDS_MCP_API_URL = "https://api.trendsmcp.ai/mcp";
 
 const COUNTRY_MAP = {
   brasil: "brazil",
@@ -70,6 +72,29 @@ const COUNTRY_MAP = {
   au: "australia",
 };
 
+// Mapeamento de código de país interno para ISO 2 (para a Trends MCP API)
+const COUNTRY_TO_ISO2 = {
+  brazil: "BR",
+  argentina: "AR",
+  mexico: "MX",
+  "united-states": "US",
+  portugal: "PT",
+  spain: "ES",
+  colombia: "CO",
+  chile: "CL",
+  peru: "PE",
+  venezuela: "VE",
+  canada: "CA",
+  "united-kingdom": "GB",
+  france: "FR",
+  germany: "DE",
+  italy: "IT",
+  japan: "JP",
+  korea: "KR",
+  india: "IN",
+  australia: "AU",
+};
+
 function normalizeCountry(input) {
   const lower = input
     .toLowerCase()
@@ -95,6 +120,137 @@ function formatNumber(num) {
     return (num / 1000).toFixed(1) + "K";
   }
   return num.toString();
+}
+
+function buildTrendLines(trendsList) {
+  return trendsList
+    .slice(0, 10)
+    .map((item, index) => {
+      const name = item.name || item.trend || item.keyword || item.title || null;
+
+      if (!name || typeof name !== "string") {
+        return null;
+      }
+
+      const volume =
+        item.tweet_volume ||
+        item.tweetVolume ||
+        item.mentions ||
+        item.volume ||
+        null;
+
+      const volumeText = volume
+        ? ` - ${formatNumber(Number(volume))} menções`
+        : "";
+
+      const tag = name.startsWith("#") ? name : `#${name}`;
+      const emoji = String.fromCodePoint(0x31 + index) + "\ufe0f\u20e3";
+
+      return `${emoji} ${tag}${volumeText}`;
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function fetchFromTrendsMcp(countryCode) {
+  const token = getTrendsMcpApiToken();
+
+  if (!token) {
+    return null;
+  }
+
+  const args = {
+    source: "twitter",
+    limit: 20,
+  };
+
+  const iso2 = COUNTRY_TO_ISO2[countryCode];
+  if (iso2) {
+    args.country = iso2;
+  }
+
+  const { data } = await axios.post(
+    TRENDS_MCP_API_URL,
+    {
+      jsonrpc: "2.0",
+      id: Date.now().toString(),
+      method: "tools/call",
+      params: {
+        name: "get_top_trends",
+        arguments: args,
+      },
+    },
+    {
+      timeout: 15000,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    }
+  );
+
+  // Extrair conteúdo da resposta MCP
+  const content = data?.result?.content;
+  if (!content || !Array.isArray(content) || content.length === 0) {
+    return null;
+  }
+
+  // O conteúdo pode ser JSON ou texto
+  const textContent = content[0]?.text;
+  if (!textContent) {
+    return null;
+  }
+
+  // Tentar parsear como JSON estruturado
+  try {
+    const parsed = JSON.parse(textContent);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+    if (parsed?.trends && Array.isArray(parsed.trends)) {
+      return parsed.trends;
+    }
+    if (parsed?.data && Array.isArray(parsed.data)) {
+      return parsed.data;
+    }
+  } catch {
+    // Resposta não é JSON — processar como texto linha a linha
+  }
+
+  // Processar como texto com uma tendência por linha
+  const lines = textContent
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    return null;
+  }
+
+  return lines.map((line) => {
+    // Remover numeração como "1. ", "1) ", "#1 " etc.
+    const clean = line.replace(/^[#]?[\d]+[.\)\s]\s*/, "").trim();
+    return { name: clean };
+  });
+}
+
+async function fetchFromTrendsTools(countryCode) {
+  const apiUrl = `${TRENDSTOOLS_BASE_URL}/${countryCode}`;
+
+  const { data } = await axios.get(apiUrl, {
+    timeout: 15000,
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    },
+  });
+
+  if (!data || (Array.isArray(data) && data.length === 0)) {
+    return null;
+  }
+
+  return Array.isArray(data) ? data : [data];
 }
 
 export default {
@@ -124,73 +280,43 @@ export default {
     await sendWaitReact();
 
     try {
-      const apiUrl = `${TRENDSTOOLS_BASE_URL}/${countryCode}`;
-      
-      const { data } = await axios.get(apiUrl, { 
-        timeout: 15000,
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      let trendsList = null;
+
+      // Tentar Trends MCP API como fonte primária
+      try {
+        trendsList = await fetchFromTrendsMcp(countryCode);
+      } catch (mcpError) {
+        errorLog(
+          `Trends MCP API falhou para ${countryCode}: ${mcpError.message}`
+        );
+      }
+
+      // Fallback para trendstools.net
+      if (!trendsList || trendsList.length === 0) {
+        try {
+          trendsList = await fetchFromTrendsTools(countryCode);
+        } catch (trendsToolsError) {
+          errorLog(
+            `trendstools.net falhou para ${countryCode}: ${trendsToolsError.message}`
+          );
         }
-      });
+      }
 
-      // Log para debug
-      console.log("📡 API Response para", countryCode, ":", {
-        tipo: Array.isArray(data) ? "array" : typeof data,
-        tamanho: Array.isArray(data) ? data.length : "N/A",
-        primeiroPrimeiro: Array.isArray(data) && data[0] ? Object.keys(data[0]) : "N/A"
-      });
-
-      if (!data || (Array.isArray(data) && data.length === 0)) {
+      if (!trendsList || trendsList.length === 0) {
         throw new WarningError(
           "Não foi possível obter os trending topics no momento. Tente novamente mais tarde."
         );
       }
 
-      // Se data não for array mas for objeto, converter em array
-      let trendsList = Array.isArray(data) ? data : [data];
-
-      if (trendsList.length === 0) {
-        throw new WarningError(
-          "Não há trending topics disponíveis para este país no momento."
-        );
-      }
-
-      const countryLabel = toTitleCase(countryCode);
-
-      const lines = trendsList
-        .slice(0, 10)
-        .map((item, index) => {
-          // Extrair dados do trending
-          const name = item.name || item.trend || item.keyword || null;
-
-          if (!name || typeof name !== "string") {
-            return null;
-          }
-
-          const volume =
-            item.tweet_volume ||
-            item.tweetVolume ||
-            item.mentions ||
-            item.volume ||
-            null;
-
-          const volumeText = volume
-            ? ` - ${formatNumber(Number(volume))} menções`
-            : "";
-
-          const tag = name.startsWith("#") ? name : `#${name}`;
-          const emoji = String.fromCodePoint(0x31 + index) + "\ufe0f\u20e3"; // 1️⃣ 2️⃣ etc
-          
-          return `${emoji} ${tag}${volumeText}`;
-        })
-        .filter(Boolean)
-        .join("\n");
+      const lines = buildTrendLines(trendsList);
 
       if (!lines) {
         throw new WarningError(
           "Não foi possível processar os trending topics."
         );
       }
+
+      const countryLabel = toTitleCase(countryCode);
 
       await sendSuccessReact();
 
@@ -203,12 +329,7 @@ export default {
         throw error;
       }
 
-      errorLog("Erro no comando /twt:", {
-        mensagem: error.message,
-        stack: error.stack,
-        url: error.config?.url,
-        status: error.response?.status,
-      });
+      errorLog(`Erro no comando /twt: ${error.message}`);
 
       await sendErrorReply(
         "Erro ao buscar trending topics. Tente novamente mais tarde."
@@ -216,3 +337,4 @@ export default {
     }
   },
 };
+

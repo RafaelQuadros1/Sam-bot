@@ -32,6 +32,7 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}set-menu-image
 ▢ • ${prefix}set-prefix
 ▢ • ${prefix}set-spider-api-token
+▢ • ${prefix}set-trends-api-token
 ▢
 ╰━━─「🌌」─━━
 

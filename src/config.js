@@ -50,6 +50,10 @@ export const LINKER_BASE_URL = "https://linker.devgui.dev/api";
 // Obtenha sua chave em: https://linker.devgui.dev.
 export const LINKER_API_KEY = "seu_token_aqui";
 
+// Token da Trends MCP API para o comando twt (trending topics).
+// Obtenha sua chave em: https://trendsmcp.ai
+export const TRENDS_MCP_API_TOKEN = "";
+
 // Caso queira responder apenas um grupo específico,
 // coloque o ID dele na configuração abaixo.
 // Para saber o ID do grupo, use o comando <prefixo>get-group-id
