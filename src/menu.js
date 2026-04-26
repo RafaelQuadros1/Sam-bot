@@ -79,10 +79,12 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}cep
 ▢ • ${prefix}enquete
 ▢ • ${prefix}info
+▢ • ${prefix}listar-sugestoes
 ▢ • ${prefix}perfil
 ▢ • ${prefix}ping
 ▢ • ${prefix}rename
 ▢ • ${prefix}sticker
+▢ • ${prefix}sugestao
 ▢ • ${prefix}to-gif
 ▢ • ${prefix}to-image
 ▢ • ${prefix}to-mp3
