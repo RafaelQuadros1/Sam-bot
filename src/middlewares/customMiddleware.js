@@ -13,6 +13,9 @@
  *
  * @author Dev Gui
  */
+import { deepseekFallback } from "../services/deepseekFallback.js";
+import { getPrefix } from "../utils/database.js";
+
 export async function customMiddleware({
   socket,
   webMessage,
@@ -21,6 +24,32 @@ export async function customMiddleware({
   action,
   data,
 }) {
-  // Adicione sua lógica customizada aqui
-  // Este arquivo é SEU - modifique à vontade!
+  if (type !== "message" || !commonFunctions) {
+    return;
+  }
+
+  const { isGroup, prefix, remoteJid, fullMessage } = commonFunctions;
+
+  // Apenas DMs — nunca em grupos
+  if (isGroup) {
+    return;
+  }
+
+  // Ignorar mensagens enviadas pelo próprio bot
+  if (webMessage?.key?.fromMe) {
+    return;
+  }
+
+  // Ignorar placeholder usado quando a mensagem não tem texto
+  if (fullMessage === "#auto-command") {
+    return;
+  }
+
+  // Ignorar quando o usuário estiver usando um comando com prefixo
+  const chatPrefix = getPrefix(remoteJid);
+  if (prefix === chatPrefix) {
+    return;
+  }
+
+  await deepseekFallback({ commonFunctions });
 }

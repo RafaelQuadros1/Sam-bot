@@ -70,3 +70,7 @@ export const PROXY_PASSWORD = "";
 
 // Chave da OpenAI para o comando de suporte
 export const OPENAI_API_KEY = "";
+
+// Chave da API do DeepSeek para o assistente de fallback em conversas privadas.
+// Obtenha sua chave em: https://platform.deepseek.com
+export const DEEPSEEK_API_KEY = "sua_chave_aqui";
