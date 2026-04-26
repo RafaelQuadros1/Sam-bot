@@ -495,6 +495,20 @@ export function listSuggestions() {
   return readJSON(SUGGESTIONS_FILE, []);
 }
 
+export function removeSuggestionById(index) {
+  const suggestions = readJSON(SUGGESTIONS_FILE, []);
+
+  if (index < 0 || index >= suggestions.length) {
+    return false;
+  }
+
+  suggestions.splice(index, 1);
+
+  writeJSON(SUGGESTIONS_FILE, suggestions, []);
+
+  return true;
+}
+
 export function setSpiderApiToken(token) {
   const filename = CONFIG_FILE;
 
