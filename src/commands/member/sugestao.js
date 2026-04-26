@@ -1,6 +1,6 @@
 import { PREFIX } from "../../config.js";
 import { InvalidParameterError } from "../../errors/index.js";
-import { addSuggestion } from "../../utils/database.js";
+import { submitSuggestion } from "../../services/suggestion.js";
 
 export default {
   name: "sugestao",
@@ -17,22 +17,7 @@ export default {
       );
     }
 
-    const minLength = 10;
-    const maxLength = 500;
-
-    if (fullArgs.length < minLength) {
-      throw new InvalidParameterError(
-        `A sugestão deve ter no mínimo ${minLength} caracteres.`
-      );
-    }
-
-    if (fullArgs.length > maxLength) {
-      throw new InvalidParameterError(
-        `A sugestão deve ter no máximo ${maxLength} caracteres.`
-      );
-    }
-
-    addSuggestion(userLid, fullArgs);
+    submitSuggestion(userLid, fullArgs);
 
     await sendReact("💡");
     await sendSuccessReply(
