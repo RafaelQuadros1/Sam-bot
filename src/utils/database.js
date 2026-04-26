@@ -477,6 +477,24 @@ export function removeAutoResponderItemByKey(key) {
   return true;
 }
 
+const SUGGESTIONS_FILE = "suggestions";
+
+export function addSuggestion(userLid, text) {
+  const suggestions = readJSON(SUGGESTIONS_FILE, []);
+
+  suggestions.push({
+    userLid,
+    text: text.trim(),
+    createdAt: new Date().toISOString(),
+  });
+
+  writeJSON(SUGGESTIONS_FILE, suggestions, []);
+}
+
+export function listSuggestions() {
+  return readJSON(SUGGESTIONS_FILE, []);
+}
+
 export function setSpiderApiToken(token) {
   const filename = CONFIG_FILE;
 
