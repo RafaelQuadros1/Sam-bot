@@ -1,2 +1,5 @@
 assets/auth/baileys
 .vscode
+src/config.js
+.env
+.env.*
