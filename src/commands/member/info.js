@@ -9,7 +9,7 @@ import { readDirectoryRecursive } from "../../utils/index.js";
 export default {
   name: "info",
   description: "Exibe as informações de um comando",
-  commands: ["info", "info-cmd", "info-comando", "info-command"],
+  commands: ["info", "info-cmd", "info-comando", "info-command", "help-cmd", "help"],
   usage: `${PREFIX}info <comando>`,
   /**
    * @param {CommandHandleProps} props

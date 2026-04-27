@@ -17,11 +17,11 @@ export default {
       );
     }
 
-    submitSuggestion(userLid, fullArgs);
+    const suggestionId = submitSuggestion(userLid, fullArgs);
 
     await sendReact("💡");
     await sendSuccessReply(
-      `✅ Sugestão recebida com sucesso!\n\n💡 *Sua sugestão:*\n${fullArgs}\n\nObrigado pelo feedback! 🙏`
+      `✅ Sugestão recebida com sucesso!\n\n💡 *Sua sugestão:*\n${fullArgs}\n\n🆔 *ID da sugestão:* ${suggestionId}\n\nPara deletar: ${PREFIX}deletar-sugestao ${suggestionId}\n\nObrigado pelo feedback! 🙏`
     );
   },
 };

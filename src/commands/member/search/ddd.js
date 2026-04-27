@@ -14,28 +14,47 @@ export default {
   handle: async ({ args, sendWarningReply, sendSuccessReply }) => {
     const ddd = args[0]?.replace(/\D/g, "");
 
-    if (!ddd || ![2, 3].includes(ddd.length)) {
+    if (!ddd || ddd.length !== 2) {
       throw new InvalidParameterError(
-        "Você precisa enviar um DDD válido com 2 ou 3 dígitos!"
+        "Você precisa enviar um DDD válido com 2 dígitos! Exemplo: 11",
       );
     }
 
     try {
-      const response = await axios.get(`https://brasilapi.com.br/api/ddd/v1/${ddd}`);
+      const response = await axios.get(
+        `https://brasilapi.com.br/api/ddd/v1/${ddd}`,
+      );
       const data = response.data;
 
-      if (!data || !data.state) {
+      const citiesList =
+        data.cities.slice(0, 10).join(", ") +
+        (data.cities.length > 10
+          ? ` e mais ${data.cities.length - 10}...`
+          : "");
+
+      await sendSuccessReply(`*Informações do DDD*
+
+*DDD*: ${data.state}${data.state !== ddd ? " " + ddd : ""}
+*Estado*: ${data.state}
+*Cidades*: ${citiesList}`);
+    } catch (error) {
+      errorLog(JSON.stringify(error, null, 2));
+
+      if (error.response?.status === 400) {
+        await sendWarningReply("DDD inválido! Use apenas 2 dígitos.");
+        return;
+      }
+
+      if (error.response?.status === 404) {
         await sendWarningReply("DDD não encontrado!");
         return;
       }
 
-      await sendSuccessReply(`*Informações do DDD*
+      if (error.response?.status === 500) {
+        await sendWarningReply("Serviço de DDD indisponível. Tente novamente!");
+        return;
+      }
 
-*DDD*: ${data.ddd}
-*Estado*: ${data.state}
-*Região*: ${data.region}`);
-    } catch (error) {
-      errorLog(JSON.stringify(error, null, 2));
       await sendWarningReply("Erro ao consultar DDD. Tente novamente!");
     }
   },

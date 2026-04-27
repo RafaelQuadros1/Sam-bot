@@ -21,7 +21,7 @@ export function submitSuggestion(userLid, text) {
     );
   }
 
-  addSuggestion(userLid, text);
+  return addSuggestion(userLid, text);
 }
 
 export function listSuggestions() {

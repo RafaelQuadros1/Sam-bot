@@ -6,7 +6,11 @@
  */
 import { DEVELOPER_MODE } from "../config.js";
 import { badMacHandler } from "../utils/badMacHandler.js";
-import { checkIfMemberIsMuted } from "../utils/database.js";
+import {
+  checkIfMemberIsMuted,
+  incrementMessageCount,
+  isActiveGroup,
+} from "../utils/database.js";
 import { dynamicCommand } from "../utils/dynamicCommand.js";
 import {
   GROUP_PARTICIPANT_ADD,
@@ -31,8 +35,8 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
         `\n\n⪨========== [ MENSAGEM RECEBIDA ] ==========⪩ \n\n${JSON.stringify(
           messages,
           null,
-          2
-        )}`
+          2,
+        )}`,
       );
     }
 
@@ -76,7 +80,7 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
       if (
         checkIfMemberIsMuted(
           webMessage?.key?.remoteJid,
-          webMessage?.key?.participant?.replace(/:[0-9][0-9]|:[0-9]/g, "")
+          webMessage?.key?.participant?.replace(/:[0-9][0-9]|:[0-9]/g, ""),
         )
       ) {
         try {
@@ -92,7 +96,7 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
           await socket.sendMessage(remoteJid, { delete: deleteKey });
         } catch (error) {
           errorLog(
-            `Erro ao deletar mensagem de membro silenciado, provavelmente eu não sou administrador do grupo! ${error.message}`
+            `Erro ao deletar mensagem de membro silenciado, provavelmente eu não sou administrador do grupo! ${error.message}`,
           );
         }
 
@@ -103,6 +107,18 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
 
       if (!commonFunctions) {
         continue;
+      }
+
+      // Rastrear mensagem para estatísticas APENAS se o grupo estiver ativo
+      if (isActiveGroup(webMessage.key.remoteJid)) {
+        const { remoteJid, participant } = webMessage.key;
+        const cleanParticipant = participant?.replace(
+          /:[0-9][0-9]|:[0-9]/g,
+          "",
+        );
+        if (remoteJid && cleanParticipant) {
+          incrementMessageCount(remoteJid, cleanParticipant);
+        }
       }
 
       await customMiddleware({
@@ -124,7 +140,7 @@ export async function onMessagesUpsert({ socket, messages, startProcess }) {
       }
 
       errorLog(
-        `Erro ao processar mensagem: ${error.message} | Stack: ${error.stack}`
+        `Erro ao processar mensagem: ${error.message} | Stack: ${error.stack}`,
       );
 
       continue;

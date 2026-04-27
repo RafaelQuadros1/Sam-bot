@@ -14,6 +14,7 @@ const __dirname = path.dirname(__filename);
 
 const databasePath = path.resolve(__dirname, "..", "..", "database");
 
+const ACTIVE_GROUPS_FILE = "active-groups";
 const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
 const AUTO_RESPONDER_FILE = "auto-responder";
 const AUTO_RESPONDER_GROUPS_FILE = "auto-responder-groups";
@@ -123,39 +124,39 @@ export function isActiveWelcomeGroup(groupId) {
 }
 
 export function activateGroup(groupId) {
-  const filename = INACTIVE_GROUPS_FILE;
+  const filename = ACTIVE_GROUPS_FILE;
 
-  const inactiveGroups = readJSON(filename);
+  const activeGroups = readJSON(filename);
 
-  const index = inactiveGroups.indexOf(groupId);
+  if (!activeGroups.includes(groupId)) {
+    activeGroups.push(groupId);
+  }
+
+  writeJSON(filename, activeGroups);
+}
+
+export function deactivateGroup(groupId) {
+  const filename = ACTIVE_GROUPS_FILE;
+
+  const activeGroups = readJSON(filename);
+
+  const index = activeGroups.indexOf(groupId);
 
   if (index === -1) {
     return;
   }
 
-  inactiveGroups.splice(index, 1);
+  activeGroups.splice(index, 1);
 
-  writeJSON(filename, inactiveGroups);
-}
-
-export function deactivateGroup(groupId) {
-  const filename = INACTIVE_GROUPS_FILE;
-
-  const inactiveGroups = readJSON(filename);
-
-  if (!inactiveGroups.includes(groupId)) {
-    inactiveGroups.push(groupId);
-  }
-
-  writeJSON(filename, inactiveGroups);
+  writeJSON(filename, activeGroups);
 }
 
 export function isActiveGroup(groupId) {
-  const filename = INACTIVE_GROUPS_FILE;
+  const filename = ACTIVE_GROUPS_FILE;
 
-  const inactiveGroups = readJSON(filename);
+  const activeGroups = readJSON(filename);
 
-  return !inactiveGroups.includes(groupId);
+  return activeGroups.includes(groupId);
 }
 
 export function getAutoResponderResponse(match) {
@@ -166,7 +167,7 @@ export function getAutoResponderResponse(match) {
   const matchUpperCase = match.toLocaleUpperCase();
 
   const data = responses.find(
-    (response) => response.match.toLocaleUpperCase() === matchUpperCase
+    (response) => response.match.toLocaleUpperCase() === matchUpperCase,
   );
 
   if (!data) {
@@ -443,7 +444,7 @@ export function addAutoResponderItem(match, answer) {
   const matchUpperCase = match.toLocaleUpperCase();
 
   const existingItem = responses.find(
-    (response) => response.match.toLocaleUpperCase() === matchUpperCase
+    (response) => response.match.toLocaleUpperCase() === matchUpperCase,
   );
 
   if (existingItem) {
@@ -489,6 +490,7 @@ export function addSuggestion(userLid, text) {
   });
 
   writeJSON(SUGGESTIONS_FILE, suggestions, []);
+  return suggestions.length;
 }
 
 export function listSuggestions() {
@@ -527,4 +529,40 @@ export function getSpiderApiToken() {
   const config = readJSON(filename, {});
 
   return config.spider_api_token || SPIDER_API_TOKEN;
+}
+
+export function incrementMessageCount(groupId, memberId) {
+  const filename = "message-stats";
+
+  const stats = readJSON(filename, {});
+
+  if (!stats[groupId]) {
+    stats[groupId] = {};
+  }
+
+  if (!stats[groupId][memberId]) {
+    stats[groupId][memberId] = 0;
+  }
+
+  stats[groupId][memberId]++;
+
+  writeJSON(filename, stats, {});
+}
+
+export function getMessageStats(groupId) {
+  const filename = "message-stats";
+
+  const stats = readJSON(filename, {});
+
+  return stats[groupId] || {};
+}
+
+export function resetMessageStats(groupId) {
+  const filename = "message-stats";
+
+  const stats = readJSON(filename, {});
+
+  delete stats[groupId];
+
+  writeJSON(filename, stats, {});
 }

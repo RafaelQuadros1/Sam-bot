@@ -16,28 +16,30 @@ export default {
 
     if (!codigo) {
       throw new InvalidParameterError(
-        "Você precisa enviar o código do banco! Exemplo: 001 (Banco do Brasil)"
+        "Você precisa enviar o código do banco! Exemplo: 001 (Banco do Brasil)",
       );
     }
 
     try {
       const response = await axios.get(
-        `https://brasilapi.com.br/api/banks/v1/${codigo}`
+        `https://brasilapi.com.br/api/banks/v1/${codigo}`,
       );
       const banco = response.data;
-
-      if (!banco || !banco.name) {
-        await sendWarningReply("Banco não encontrado!");
-        return;
-      }
 
       await sendSuccessReply(`*Informações do Banco*
 
 *Código*: ${banco.code}
 *Nome*: ${banco.name}
+*Nome Completo*: ${banco.fullName}
 *ISPB*: ${banco.ispb}`);
     } catch (error) {
       errorLog(JSON.stringify(error, null, 2));
+
+      if (error.response?.status === 404) {
+        await sendWarningReply("Código bancário não encontrado!");
+        return;
+      }
+
       await sendWarningReply("Erro ao consultar banco. Tente novamente!");
     }
   },

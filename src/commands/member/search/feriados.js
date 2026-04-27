@@ -18,14 +18,14 @@ export default {
       year = args[0];
       if (!/^\d{4}$/.test(year)) {
         throw new InvalidParameterError(
-          "Ano inválido! Use o formato YYYY (ex: 2024)"
+          "Ano inválido! Use o formato YYYY (ex: 2024)",
         );
       }
     }
 
     try {
       const response = await axios.get(
-        `https://brasilapi.com.br/api/feriados/v1/${year}`
+        `https://brasilapi.com.br/api/feriados/v1/${year}`,
       );
       const feriados = response.data;
 
@@ -36,7 +36,9 @@ export default {
 
       let message = `*Feriados de ${year}*\n\n`;
       feriados.forEach((feriado) => {
-        message += `📅 *${feriado.date}* - ${feriado.name}\n`;
+        const tipo =
+          feriado.type === "national" ? "🇧🇷 Nacional" : "📌 Estadual/Municipal";
+        message += `📅 *${feriado.date}* - ${feriado.name}\n${tipo}\n\n`;
       });
 
       await sendSuccessReply(message);

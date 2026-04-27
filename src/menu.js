@@ -10,7 +10,6 @@ import { readMore } from "./utils/index.js";
 
 export function menuMessage(groupJid) {
   const date = new Date();
-
   const prefix = getPrefix(groupJid);
 
   return `╭━━⪩ BEM VINDO! ⪨━━${readMore()}
@@ -23,6 +22,76 @@ export function menuMessage(groupJid) {
 ▢
 ╰━━─「🪐」─━━
 
+╭━━⪩ Mais USADOS ⪨━━
+▢ • ${prefix}ping
+▢ • ${prefix}sugestao
+▢ • ${prefix}perfil
+▢ • ${prefix}sticker
+╰━━─「🏅」─━━
+
+╭━━⪩ PRINCIPAL ⪨━━
+▢
+▢ • ${prefix}attp
+▢ • ${prefix}brat
+▢ • ${prefix}enquete
+▢ • ${prefix}info
+▢ • ${prefix}listar-sugestoes
+▢ • ${prefix}perfil
+▢ • ${prefix}ping
+▢ • ${prefix}rename
+▢ • ${prefix}sticker
+▢ • ${prefix}sugestao
+▢ • ${prefix}to-image
+▢ • ${prefix}to-mp3
+▢ • ${prefix}top-mensagens
+▢
+╰━━─「🚀」─━━
+
+╭━━⪩ CONSULTAS 🔍 ⪨━━
+▢
+▢ • ${prefix}bancos 
+▢ • ${prefix}cep
+▢ • ${prefix}cnpj
+▢ • ${prefix}ddd
+▢ • ${prefix}feriados
+▢
+╰━━─「📋」─━━
+
+╭━━⪩ BRINCADEIRAS ⪨━━
+▢
+▢ • ${prefix}abracar
+▢ • ${prefix}beijar
+▢ • ${prefix}dado
+▢ • ${prefix}jantar
+▢ • ${prefix}lutar
+▢ • ${prefix}matar
+▢ • ${prefix}socar
+▢
+╰━━─「🎡」─━━
+`;
+}
+
+export function adminMenuMessage(groupJid) {
+  const date = new Date();
+  const prefix = getPrefix(groupJid);
+
+  return `╭━━⪩ BEM VINDO! ⪨━━${readMore()}
+▢
+▢ • ${BOT_NAME}
+▢ • Data: ${date.toLocaleDateString("pt-br")}
+▢ • Hora: ${date.toLocaleTimeString("pt-br")}
+▢ • Prefixo: ${prefix}
+▢ • Versão: ${pkg.version}
+▢
+╰━━─「🪐」─━━
+
+╭━━⪩ Mais USADOS ⪨━━
+▢ • ${prefix}ping
+▢ • ${prefix}sugestao
+▢ • ${prefix}perfil
+▢ • ${prefix}sticker
+╰━━─「🏅」─━━
+
 ╭━━⪩ DONO ⪨━━
 ▢
 ▢ • ${prefix}exec
@@ -31,9 +100,9 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}on
 ▢ • ${prefix}set-menu-image
 ▢ • ${prefix}set-prefix
-▢ • ${prefix}set-spider-api-token
 ▢
 ╰━━─「🌌」─━━
+
 
 ╭━━⪩ ADMINS ⪨━━
 ▢
@@ -88,6 +157,7 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}to-image
 ▢ • ${prefix}to-mp3
 ▢ • ${prefix}ttp
+▢ • ${prefix}top-mensagens
 ▢
 ╰━━─「🚀」─━━
 
