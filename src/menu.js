@@ -76,7 +76,6 @@ export function menuMessage(groupJid) {
 ▢
 ▢ • ${prefix}attp
 ▢ • ${prefix}brat
-▢ • ${prefix}cep
 ▢ • ${prefix}enquete
 ▢ • ${prefix}info
 ▢ • ${prefix}listar-sugestoes
@@ -91,6 +90,16 @@ export function menuMessage(groupJid) {
 ▢ • ${prefix}ttp
 ▢
 ╰━━─「🚀」─━━
+
+╭━━⪩ CONSULTAS 🔍 ⪨━━
+▢
+▢ • ${prefix}bancos <codigo>
+▢ • ${prefix}cep <cep>
+▢ • ${prefix}cnpj <cnpj>
+▢ • ${prefix}ddd <ddd>
+▢ • ${prefix}feriados [ano]
+▢
+╰━━─「📋」─━━
 
 ╭━━⪩ BRINCADEIRAS ⪨━━
 ▢
